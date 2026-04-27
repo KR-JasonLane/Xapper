@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Xapper.Injector/Xapper.Injector.csproj" />
+    <Project Path="src/Xapper.Inspector/Xapper.Inspector.csproj" />
+    <Project Path="src/Xapper.McpServer/Xapper.McpServer.csproj" />
+    <Project Path="src/Xapper.Protocol/Xapper.Protocol.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Xapper.TestApp/Xapper.TestApp.csproj" />
+    <Project Path="tests/Xapper.Tests/Xapper.Tests.csproj" />
+  </Folder>
+</Solution>

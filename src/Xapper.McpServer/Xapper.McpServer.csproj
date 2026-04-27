@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Xapper.Protocol\Xapper.Protocol.csproj" />
+    <ProjectReference Include="..\Xapper.Injector\Xapper.Injector.csproj" />
+  </ItemGroup>
+
+</Project>

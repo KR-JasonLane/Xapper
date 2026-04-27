@@ -1,0 +1,37 @@
+<Window x:Class="Xapper.TestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Xapper Test App" Height="350" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <StackPanel VerticalAlignment="Center" Width="300">
+            <TextBlock Text="Login" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <TextBlock Text="Username" Margin="0,0,0,5"/>
+            <TextBox x:Name="txtUsername"
+                     AutomationProperties.AutomationId="UsernameInput"
+                     Margin="0,0,0,10"/>
+
+            <TextBlock Text="Password" Margin="0,0,0,5"/>
+            <PasswordBox x:Name="txtPassword"
+                         AutomationProperties.AutomationId="PasswordInput"
+                         Margin="0,0,0,10"/>
+
+            <CheckBox x:Name="chkRemember"
+                      Content="Remember me"
+                      AutomationProperties.AutomationId="RememberCheckbox"
+                      Margin="0,0,0,15"/>
+
+            <Button x:Name="btnLogin"
+                    Content="Log In"
+                    AutomationProperties.AutomationId="LoginButton"
+                    Height="35"
+                    Click="BtnLogin_Click"/>
+
+            <TextBlock x:Name="txtStatus"
+                       AutomationProperties.AutomationId="StatusText"
+                       Margin="0,10,0,0"
+                       Foreground="Green"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,29 @@
+## .NET
+bin/
+obj/
+publish/
+
+## IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## NuGet
+*.nupkg
+packages/
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Misc
+*.log
