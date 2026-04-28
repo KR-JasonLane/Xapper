@@ -3,16 +3,18 @@ using System.Diagnostics;
 namespace Xapper.Injector;
 
 /// <summary>
-/// Wraps the injection mechanism to load Xapper.Inspector into a target WPF process.
-/// Currently uses a simplified approach pending Snoop submodule integration.
+/// Injects Xapper.Inspector into a target WPF process using Snoop's InjectorLauncher.
+/// Calls the InjectorLauncher as a subprocess with appropriate command-line arguments.
 /// </summary>
 public sealed class WpfProcessInjector
 {
     private readonly string _inspectorDllPath;
+    private readonly string _injectorLauncherPath;
 
-    public WpfProcessInjector(string inspectorDllPath)
+    public WpfProcessInjector(string inspectorDllPath, string injectorLauncherPath)
     {
         _inspectorDllPath = inspectorDllPath;
+        _injectorLauncherPath = injectorLauncherPath;
     }
 
     public void Inject(int processId)
@@ -23,20 +25,49 @@ public sealed class WpfProcessInjector
             throw new InvalidOperationException(
                 $"Process {processId} ({process.ProcessName}) has no visible main window");
 
-        // TODO: Integrate Snoop InjectorLauncher via submodule
-        // For now, this is a placeholder that will be replaced with:
-        //   var processWrapper = ProcessWrapper.From(processId, process.MainWindowHandle);
-        //   var injectorData = new InjectorData
-        //   {
-        //       FullAssemblyPath = _inspectorDllPath,
-        //       ClassName = "Xapper.Inspector.EntryPoint",
-        //       MethodName = "Initialize"
-        //   };
-        //   Injector.InjectIntoProcess(processWrapper, injectorData);
+        if (!File.Exists(_injectorLauncherPath))
+            throw new FileNotFoundException(
+                $"Snoop InjectorLauncher not found at: {_injectorLauncherPath}. " +
+                "Build Snoop first or provide the correct path.",
+                _injectorLauncherPath);
 
-        throw new NotImplementedException(
-            "Snoop submodule integration pending. " +
-            "Add snoopwpf as submodule and reference Snoop.InjectorLauncher.");
+        if (!File.Exists(_inspectorDllPath))
+            throw new FileNotFoundException(
+                $"Xapper.Inspector.dll not found at: {_inspectorDllPath}",
+                _inspectorDllPath);
+
+        var hwnd = process.MainWindowHandle.ToInt64();
+        var args = $"-t {processId} -h {hwnd} -a \"{_inspectorDllPath}\" -c \"Xapper.Inspector.EntryPoint\" -m \"Initialize\"";
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = _injectorLauncherPath,
+            Arguments = args,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        using var injectorProcess = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start InjectorLauncher process");
+
+        injectorProcess.WaitForExit(TimeSpan.FromSeconds(30));
+
+        if (!injectorProcess.HasExited)
+        {
+            injectorProcess.Kill();
+            throw new TimeoutException("InjectorLauncher timed out after 30 seconds");
+        }
+
+        if (injectorProcess.ExitCode != 0)
+        {
+            var stderr = injectorProcess.StandardError.ReadToEnd();
+            var stdout = injectorProcess.StandardOutput.ReadToEnd();
+            throw new InvalidOperationException(
+                $"InjectorLauncher failed with exit code {injectorProcess.ExitCode}.\n" +
+                $"stdout: {stdout}\nstderr: {stderr}");
+        }
     }
 
     public static bool IsWpfProcess(Process process)
@@ -45,11 +76,12 @@ public sealed class WpfProcessInjector
         {
             foreach (ProcessModule module in process.Modules)
             {
-                if (module.ModuleName.Equals("PresentationFramework.dll", StringComparison.OrdinalIgnoreCase))
+                if (module.ModuleName.Equals("PresentationFramework.dll", StringComparison.OrdinalIgnoreCase)
+                    || module.ModuleName.Equals("wpfgfx_cor3.dll", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
         }
-        catch (Exception)
+        catch
         {
             // Access denied or process exited
         }

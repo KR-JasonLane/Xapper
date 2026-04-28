@@ -1,10 +1,10 @@
 using System.ComponentModel;
-using System.Text.Json;
+using ModelContextProtocol.Server;
 using Xapper.Injector;
-using Xapper.Protocol;
 
 namespace Xapper.McpServer.Tools;
 
+[McpServerToolType]
 public sealed class ProcessTools
 {
     private readonly SessionManager _sessionManager;
@@ -16,6 +16,7 @@ public sealed class ProcessTools
         _injector = injector;
     }
 
+    [McpServerTool(Name = "xapper_list_processes"), Description("List running WPF processes available for attachment")]
     public string ListProcesses()
     {
         var processes = WpfProcessInjector.GetWpfProcesses();
@@ -31,26 +32,30 @@ public sealed class ProcessTools
         return string.Join("\n", lines);
     }
 
-    public async Task<string> AttachAsync(int pid, int timeout = 10000, CancellationToken ct = default)
+    [McpServerTool(Name = "xapper_attach"), Description("Attach to a WPF process by injecting the Xapper inspector")]
+    public async Task<string> Attach(
+        [Description("Process ID of the target WPF application")] int pid,
+        [Description("Timeout in ms to wait for connection (default 10000)")] int timeout = 10000,
+        CancellationToken ct = default)
     {
-        // Step 1: Inject inspector into target process
         _injector.Inject(pid);
 
-        // Step 2: Wait for pipe to become available, then connect
         using var timeoutCts = new CancellationTokenSource(timeout);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
-        // Give the inspector a moment to start its pipe server
-        await Task.Delay(500, linkedCts.Token);
+        // Give the inspector time to start its pipe server
+        await Task.Delay(1000, linkedCts.Token);
 
         var client = await _sessionManager.AttachAsync(pid, linkedCts.Token);
-
-        // Step 3: Verify connection
         var pong = await client.PingAsync(linkedCts.Token);
+
         return $"Attached to process {pid}. Connection verified.";
     }
 
-    public async Task<string> DetachAsync(int? pid = null, CancellationToken ct = default)
+    [McpServerTool(Name = "xapper_detach"), Description("Detach from the currently attached WPF process")]
+    public async Task<string> Detach(
+        [Description("Process ID (optional, defaults to active session)")] int? pid = null,
+        CancellationToken ct = default)
     {
         await _sessionManager.DetachAsync(pid, ct);
         return pid.HasValue

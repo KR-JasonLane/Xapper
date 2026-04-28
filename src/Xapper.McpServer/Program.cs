@@ -1,23 +1,30 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ModelContextProtocol.Server;
 using Xapper.Injector;
 using Xapper.McpServer;
 using Xapper.McpServer.Tools;
 
-// Xapper MCP Server - stdio transport
-// Provides AI agents with tools to inspect and control WPF applications
+var builder = Host.CreateApplicationBuilder(args);
 
-var sessionManager = new SessionManager();
-var injectorDllPath = Path.Combine(AppContext.BaseDirectory, "Xapper.Inspector.dll");
-var injector = new WpfProcessInjector(injectorDllPath);
+var inspectorDllPath = Path.Combine(AppContext.BaseDirectory, "Xapper.Inspector.dll");
+var injectorLauncherPath = Path.Combine(AppContext.BaseDirectory, "external", "Snoop.InjectorLauncher.x64.exe");
 
-var processTools = new ProcessTools(sessionManager, injector);
-var snapshotTools = new SnapshotTools(sessionManager);
-var actionTools = new ActionTools(sessionManager);
+builder.Services.AddSingleton<SessionManager>();
+builder.Services.AddSingleton(new WpfProcessInjector(inspectorDllPath, injectorLauncherPath));
 
-// TODO: Integrate with MCP SDK (ModelContextProtocol NuGet package)
-// For now, output available tools as a placeholder
-Console.Error.WriteLine("Xapper MCP Server started (stdio mode)");
-Console.Error.WriteLine("Available tools: xapper_list_processes, xapper_attach, xapper_detach, xapper_snapshot, xapper_click, xapper_type");
-Console.Error.WriteLine("Waiting for MCP SDK integration...");
+builder.Services.AddMcpServer(options =>
+{
+    options.ServerInfo = new()
+    {
+        Name = "Xapper",
+        Version = "0.1.0"
+    };
+})
+.WithStdioServerTransport()
+.WithTools<ProcessTools>()
+.WithTools<SnapshotTools>()
+.WithTools<ActionTools>();
 
-// Keep process alive
-await Task.Delay(Timeout.Infinite);
+var app = builder.Build();
+await app.RunAsync();

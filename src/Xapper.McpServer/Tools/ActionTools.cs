@@ -1,9 +1,11 @@
-using System.Text.Json;
+using System.ComponentModel;
+using ModelContextProtocol.Server;
 using Xapper.Protocol;
 using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+[McpServerToolType]
 public sealed class ActionTools
 {
     private readonly SessionManager _sessionManager;
@@ -13,7 +15,11 @@ public sealed class ActionTools
         _sessionManager = sessionManager;
     }
 
-    public async Task<string> ClickAsync(int @ref, int timeout = 5000, CancellationToken ct = default)
+    [McpServerTool(Name = "xapper_click"), Description("Click a UI element by ref (uses AutomationPeer or RaiseEvent fallback)")]
+    public async Task<string> Click(
+        [Description("Element ref from last snapshot")] int @ref,
+        [Description("Timeout in ms to wait for element readiness (default 5000)")] int timeout = 5000,
+        CancellationToken ct = default)
     {
         var client = _sessionManager.GetActive();
         var response = await client.ClickAsync(@ref, timeout, ct);
@@ -25,7 +31,13 @@ public sealed class ActionTools
         return result.Success ? result.Message ?? "Click succeeded" : $"Failed: {result.Error}";
     }
 
-    public async Task<string> TypeAsync(int @ref, string text, bool clear = true, int timeout = 5000, CancellationToken ct = default)
+    [McpServerTool(Name = "xapper_type"), Description("Type text into a TextBox or editable element by ref")]
+    public async Task<string> Type(
+        [Description("Element ref from last snapshot")] int @ref,
+        [Description("Text to type into the element")] string text,
+        [Description("If true, clears existing text first (default true)")] bool clear = true,
+        [Description("Timeout in ms (default 5000)")] int timeout = 5000,
+        CancellationToken ct = default)
     {
         var client = _sessionManager.GetActive();
         var response = await client.TypeAsync(@ref, text, clear, timeout, ct);

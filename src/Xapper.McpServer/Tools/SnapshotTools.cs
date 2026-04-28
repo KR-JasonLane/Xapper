@@ -1,10 +1,13 @@
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
+using ModelContextProtocol.Server;
 using Xapper.Protocol;
 using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+[McpServerToolType]
 public sealed class SnapshotTools
 {
     private readonly SessionManager _sessionManager;
@@ -14,7 +17,12 @@ public sealed class SnapshotTools
         _sessionManager = sessionManager;
     }
 
-    public async Task<string> SnapshotAsync(int? rootRef = null, int maxDepth = 5, string format = "text", CancellationToken ct = default)
+    [McpServerTool(Name = "xapper_snapshot"), Description("Get a snapshot of the UI visual tree with element refs for subsequent actions")]
+    public async Task<string> Snapshot(
+        [Description("Root element ref to snapshot from (omit for full window)")] int? rootRef = null,
+        [Description("Max depth to traverse (default 5)")] int maxDepth = 5,
+        [Description("Output format: 'text' (compact) or 'json' (structured)")] string format = "text",
+        CancellationToken ct = default)
     {
         var client = _sessionManager.GetActive();
         var response = await client.SnapshotAsync(rootRef, maxDepth, ct);
@@ -48,7 +56,7 @@ public sealed class SnapshotTools
         if (!string.IsNullOrEmpty(element.AutomationId))
             parts.Add($"id=\"{element.AutomationId}\"");
         if (!string.IsNullOrEmpty(element.Text))
-            parts.Add($"text=\"{element.Text}\"");
+            parts.Add($"text=\"{Truncate(element.Text, 50)}\"");
         if (!element.IsEnabled)
             parts.Add("disabled");
         if (!element.IsVisible)
@@ -60,5 +68,10 @@ public sealed class SnapshotTools
         {
             FormatElement(sb, child, indent + 1);
         }
+    }
+
+    private static string Truncate(string text, int maxLength)
+    {
+        return text.Length <= maxLength ? text : text[..maxLength] + "...";
     }
 }

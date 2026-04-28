@@ -1,9 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Xapper.Protocol\Xapper.Protocol.csproj" />
   </ItemGroup>
