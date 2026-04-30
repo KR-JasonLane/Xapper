@@ -24,7 +24,10 @@ builder.Services.AddMcpServer(options =>
 .WithStdioServerTransport()
 .WithTools<ProcessTools>()
 .WithTools<SnapshotTools>()
-.WithTools<ActionTools>();
+.WithTools<ActionTools>()
+.WithTools<InteractionTools>()
+.WithTools<DiagnosticTools>()
+.WithTools<CaptureTools>();
 
 var app = builder.Build();
 await app.RunAsync();

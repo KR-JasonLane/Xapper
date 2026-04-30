@@ -71,6 +71,62 @@ public sealed class InspectorClient : IAsyncDisposable
         return await SendAsync(request, ct);
     }
 
+    public async Task<IpcMessage> SelectAsync(int @ref, string? itemText = null, int? itemIndex = null, int timeout = 5000, CancellationToken ct = default)
+    {
+        var payload = new { @ref, itemText, itemIndex, timeout };
+        var request = IpcSerializer.CreateRequest("select", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> ToggleAsync(int @ref, int timeout = 5000, CancellationToken ct = default)
+    {
+        var payload = new { @ref, timeout };
+        var request = IpcSerializer.CreateRequest("toggle", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> ExpandAsync(int @ref, bool expand = true, int timeout = 5000, CancellationToken ct = default)
+    {
+        var payload = new { @ref, expand, timeout };
+        var request = IpcSerializer.CreateRequest("expand", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> ScrollAsync(int @ref, double horizontalPercent = -1, double verticalPercent = -1, int timeout = 5000, CancellationToken ct = default)
+    {
+        var payload = new { @ref, horizontalPercent, verticalPercent, timeout };
+        var request = IpcSerializer.CreateRequest("scroll", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> GetPropertyAsync(int @ref, string propertyName, CancellationToken ct = default)
+    {
+        var payload = new { @ref, propertyName };
+        var request = IpcSerializer.CreateRequest("getProperty", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> GetBindingsAsync(int @ref, CancellationToken ct = default)
+    {
+        var payload = new { @ref };
+        var request = IpcSerializer.CreateRequest("getBindings", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> ScreenshotAsync(int? @ref = null, CancellationToken ct = default)
+    {
+        var payload = new { @ref };
+        var request = IpcSerializer.CreateRequest("screenshot", payload);
+        return await SendAsync(request, ct);
+    }
+
+    public async Task<IpcMessage> AssertAsync(int @ref, string property, string expected, CancellationToken ct = default)
+    {
+        var payload = new { @ref, property, expected };
+        var request = IpcSerializer.CreateRequest("assert", payload);
+        return await SendAsync(request, ct);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_pipe != null)
