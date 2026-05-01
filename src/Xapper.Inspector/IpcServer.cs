@@ -82,6 +82,7 @@ public sealed class IpcServer
                 "getBindings" => await HandleGetBindings(message),
                 "screenshot" => await HandleScreenshot(message),
                 "assert" => await HandleAssert(message),
+                "find" => await HandleFind(message),
                 _ => IpcSerializer.CreateError(message.Id, $"Unknown method: {message.Method}")
             };
         }
@@ -316,6 +317,23 @@ public sealed class IpcServer
                 ? $"PASS: {request.Property} == \"{request.Expected}\""
                 : $"FAIL: {request.Property} expected \"{request.Expected}\" but was \"{actual}\""
         };
+        return IpcSerializer.CreateResponse(message.Id, response);
+    }
+
+    private async Task<IpcMessage> HandleFind(IpcMessage message)
+    {
+        var request = IpcSerializer.DeserializePayload<FindElementRequest>(message.Payload!.Value);
+
+        var response = await Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            var root = Application.Current.MainWindow as DependencyObject;
+            if (root == null)
+                throw new InvalidOperationException("No main window found");
+
+            var finder = new ElementFinder();
+            return finder.Find(root, request, _refRegistry);
+        });
+
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 

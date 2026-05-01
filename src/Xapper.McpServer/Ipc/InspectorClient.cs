@@ -127,6 +127,13 @@ public sealed class InspectorClient : IAsyncDisposable
         return await SendAsync(request, ct);
     }
 
+    public async Task<IpcMessage> FindAsync(string? name = null, string? automationId = null, string? type = null, string? text = null, CancellationToken ct = default)
+    {
+        var payload = new { name, automationId, type, text };
+        var request = IpcSerializer.CreateRequest("find", payload);
+        return await SendAsync(request, ct);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_pipe != null)

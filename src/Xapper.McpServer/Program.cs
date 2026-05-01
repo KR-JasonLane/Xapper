@@ -27,7 +27,8 @@ builder.Services.AddMcpServer(options =>
 .WithTools<ActionTools>()
 .WithTools<InteractionTools>()
 .WithTools<DiagnosticTools>()
-.WithTools<CaptureTools>();
+.WithTools<CaptureTools>()
+.WithTools<FindTools>();
 
 var app = builder.Build();
 await app.RunAsync();
