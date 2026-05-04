@@ -27,3 +27,8 @@ Desktop.ini
 
 ## Misc
 *.log
+
+## Snoop pre-built binaries (keep DLL/EXE, ignore PDB and temp files)
+external/snoop-bin/*.pdb
+external/snoop-bin/*.ignore
+external/snoop-bin/net6.0-windows/

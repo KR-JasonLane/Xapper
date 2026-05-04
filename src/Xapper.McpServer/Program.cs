@@ -7,8 +7,12 @@ using Xapper.McpServer.Tools;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-var inspectorDllPath = Path.Combine(AppContext.BaseDirectory, "Xapper.Inspector.dll");
-var injectorLauncherPath = Path.Combine(AppContext.BaseDirectory, "external", "Snoop.InjectorLauncher.x64.exe");
+// Resolve paths: check environment variables first, then fall back to well-known locations.
+var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+var inspectorDllPath = Environment.GetEnvironmentVariable("XAPPER_INSPECTOR_DLL")
+    ?? Path.Combine(projectRoot, "src", "Xapper.Inspector", "bin", "Debug", "net9.0-windows", "Xapper.Inspector.dll");
+var injectorLauncherPath = Environment.GetEnvironmentVariable("XAPPER_INJECTOR_LAUNCHER")
+    ?? Path.Combine(projectRoot, "external", "snoop-bin", "Snoop.InjectorLauncher.x64.exe");
 
 builder.Services.AddSingleton<SessionManager>();
 builder.Services.AddSingleton(new WpfProcessInjector(inspectorDllPath, injectorLauncherPath));
