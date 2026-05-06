@@ -7,6 +7,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// 프로퍼티 조회, 바인딩 검사, 값 검증(assert) 등 진단 MCP 도구를 제공하는 클래스.
+/// </summary>
 [McpServerToolType]
 public sealed class DiagnosticTools
 {

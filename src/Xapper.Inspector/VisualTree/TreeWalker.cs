@@ -7,12 +7,25 @@ using Xapper.Protocol;
 
 namespace Xapper.Inspector.VisualTree;
 
+/// <summary>
+/// WPF 비주얼 트리를 재귀적으로 순회하여 ElementSnapshot 트리를 생성하는 클래스.
+/// 각 노드의 타입, 이름, AutomationId, 텍스트, 상태, 바운딩 박스를 캡처.
+/// </summary>
 public sealed class TreeWalker
 {
+    /// <summary>
+    /// 루트 요소부터 지정된 깊이까지 비주얼 트리를 순회합니다.
+    /// </summary>
+    /// <param name="root">순회 시작 요소.</param>
+    /// <param name="registry">요소를 등록할 참조 레지스트리.</param>
+    /// <param name="maxDepth">최대 탐색 깊이.</param>
+    /// <returns>루트 요소의 스냅샷 (자식 포함).</returns>
     public ElementSnapshot Walk(DependencyObject root, RefRegistry registry, int maxDepth)
     {
         return WalkElement(root, registry, 0, maxDepth);
     }
+
+    #region Private Methods
 
     private ElementSnapshot WalkElement(DependencyObject element, RefRegistry registry, int depth, int maxDepth)
     {
@@ -100,4 +113,6 @@ public sealed class TreeWalker
             return null;
         }
     }
+
+    #endregion
 }

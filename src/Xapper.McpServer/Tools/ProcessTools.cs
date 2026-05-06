@@ -4,6 +4,9 @@ using Xapper.Injector;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// WPF 프로세스 목록 조회, 연결(attach), 해제(detach) MCP 도구를 제공하는 클래스.
+/// </summary>
 [McpServerToolType]
 public sealed class ProcessTools
 {

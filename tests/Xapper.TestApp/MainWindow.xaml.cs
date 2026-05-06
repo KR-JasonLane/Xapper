@@ -2,6 +2,10 @@ using System.Windows;
 
 namespace Xapper.TestApp;
 
+/// <summary>
+/// Xapper E2E 테스트용 샘플 WPF 로그인 폼.
+/// 사용자 이름 입력, 기억하기 체크박스, 로그인 버튼, 상태 텍스트를 제공.
+/// </summary>
 public partial class MainWindow : Window
 {
     public MainWindow()

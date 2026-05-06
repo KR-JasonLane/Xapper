@@ -4,24 +4,35 @@ using System.Runtime.Loader;
 
 namespace Xapper.Inspector;
 
+/// <summary>
+/// Snoop InjectorLauncher에 의해 호출되는 주입 진입점.
+/// 대상 WPF 프로세스 내부에서 실행되며 어셈블리 리졸버 등록 후 IPC 서버를 시작.
+/// </summary>
 public static class EntryPoint
 {
+    #region Fields
+
     private static IpcServer? _server;
     private static readonly string LogPath = Path.Combine(Path.GetTempPath(), "xapper_inspector.log");
 
-    private static void Log(string msg)
-    {
-        try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n"); } catch { }
-    }
+    #endregion
 
+    #region Public Methods
+
+    /// <summary>
+    /// 주입 초기화 메서드. InjectorLauncher의 ExecuteInDefaultAppDomain에 의해 호출됨.
+    /// 어셈블리 리졸버를 등록한 뒤 Named Pipe IPC 서버를 백그라운드에서 시작.
+    /// </summary>
+    /// <param name="args">InjectorLauncher로부터 전달받는 인자 문자열.</param>
+    /// <returns>성공 시 0, 실패 시 1.</returns>
     public static int Initialize(string args)
     {
         try
         {
             Log($"Initialize called. Args={args}");
 
-            // Register assembly resolver BEFORE referencing any types from dependencies.
-            // ExecuteInDefaultAppDomain in .NET Core doesn't resolve deps automatically.
+            // .NET Core의 ExecuteInDefaultAppDomain은 의존성을 자동으로 리졸브하지 않으므로
+            // 의존 타입 참조 전에 어셈블리 리졸버를 먼저 등록해야 함
             var thisDir = Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location)!;
             Log($"Assembly dir: {thisDir}");
 
@@ -44,8 +55,22 @@ public static class EntryPoint
         }
     }
 
-    // Separate method to ensure Protocol types are not JIT-resolved
-    // until after the assembly resolver is registered.
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// 로그 메시지를 임시 폴더의 로그 파일에 기록합니다.
+    /// </summary>
+    private static void Log(string msg)
+    {
+        try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n"); } catch { }
+    }
+
+    /// <summary>
+    /// IPC 서버를 백그라운드 태스크에서 시작합니다.
+    /// Protocol 타입이 어셈블리 리졸버 등록 후에 JIT 리졸브되도록 별도 메서드로 분리.
+    /// </summary>
     private static void StartServer()
     {
         var pipeName = Protocol.IpcPipeNames.ForProcess(Environment.ProcessId);
@@ -65,4 +90,6 @@ public static class EntryPoint
         });
         Log("Server task fired");
     }
+
+    #endregion
 }

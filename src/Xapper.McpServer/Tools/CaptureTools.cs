@@ -6,6 +6,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// 스크린샷 캡처 MCP 도구를 제공하는 클래스.
+/// </summary>
 [McpServerToolType]
 public sealed class CaptureTools
 {

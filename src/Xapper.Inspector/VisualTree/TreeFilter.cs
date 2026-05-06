@@ -6,12 +6,26 @@ using Xapper.Protocol.Messages.Requests;
 
 namespace Xapper.Inspector.VisualTree;
 
+/// <summary>
+/// 필터 조건이 적용된 비주얼 트리 스냅샷을 생성하는 클래스.
+/// 타입/이름 필터 및 가시성 필터를 지원하며, 매칭되는 자손이 있는 서브트리는 포함.
+/// 현재 MCP 도구에서는 사용되지 않으며 향후 확장을 위해 존재.
+/// </summary>
 public sealed class TreeFilter
 {
+    /// <summary>
+    /// 필터 조건에 따라 비주얼 트리를 순회하여 스냅샷을 생성합니다.
+    /// </summary>
+    /// <param name="root">탐색 시작 요소.</param>
+    /// <param name="registry">요소 참조 레지스트리.</param>
+    /// <param name="request">필터 조건 (TypeFilter, NameFilter, VisibleOnly, MaxDepth).</param>
+    /// <returns>필터링된 트리 스냅샷.</returns>
     public ElementSnapshot WalkFiltered(DependencyObject root, RefRegistry registry, FilteredSnapshotRequest request)
     {
         return WalkElement(root, registry, 0, request);
     }
+
+    #region Private Methods
 
     private ElementSnapshot WalkElement(DependencyObject element, RefRegistry registry, int depth, FilteredSnapshotRequest request)
     {
@@ -54,7 +68,7 @@ public sealed class TreeFilter
         {
             if (!element.GetType().Name.Contains(request.TypeFilter, StringComparison.OrdinalIgnoreCase))
             {
-                // Still include if any descendant matches
+                // 타입이 매칭되지 않더라도 자손 중 매칭되는 것이 있으면 포함
                 return HasMatchingDescendant(element, request.TypeFilter);
             }
         }
@@ -86,4 +100,6 @@ public sealed class TreeFilter
             _ => null
         };
     }
+
+    #endregion
 }

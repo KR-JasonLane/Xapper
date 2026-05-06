@@ -12,18 +12,40 @@ using Xapper.Inspector.Capture;
 
 namespace Xapper.Inspector;
 
+/// <summary>
+/// 주입된 WPF 프로세스 내부에서 실행되는 Named Pipe IPC 서버.
+/// McpServer로부터 요청을 수신하고, Dispatcher를 통해 UI 스레드에서 액션을 실행한 뒤 응답을 반환.
+/// </summary>
 public sealed class IpcServer
 {
+    #region Fields
+
     private readonly string _pipeName;
     private readonly RefRegistry _refRegistry = new();
     private readonly TreeWalker _treeWalker = new();
     private CancellationTokenSource? _cts;
 
+    #endregion
+
+    #region Constructor
+
+    /// <summary>
+    /// <see cref="IpcServer"/>의 새 인스턴스를 생성합니다.
+    /// </summary>
+    /// <param name="pipeName">수신 대기할 Named Pipe 이름.</param>
     public IpcServer(string pipeName)
     {
         _pipeName = pipeName;
     }
 
+    #endregion
+
+    #region Lifecycle
+
+    /// <summary>
+    /// Named Pipe 연결을 무한 루프로 수신 대기합니다.
+    /// 한 번에 하나의 연결만 허용 (maxNumberOfServerInstances=1).
+    /// </summary>
     public async Task StartListening()
     {
         _cts = new CancellationTokenSource();
@@ -45,11 +67,23 @@ public sealed class IpcServer
             }
             catch (Exception ex) when (ex is IOException or OperationCanceledException)
             {
-                // Client disconnected or shutdown requested
+                // 클라이언트 연결 해제 또는 종료 요청
             }
         }
     }
 
+    /// <summary>
+    /// IPC 서버를 중지합니다.
+    /// </summary>
+    public void Stop() => _cts?.Cancel();
+
+    #endregion
+
+    #region Message Handling
+
+    /// <summary>
+    /// 단일 파이프 연결에서 메시지를 반복적으로 수신하고 처리합니다.
+    /// </summary>
     private async Task HandleConnection(NamedPipeServerStream pipe, CancellationToken ct)
     {
         while (pipe.IsConnected && !ct.IsCancellationRequested)
@@ -64,6 +98,9 @@ public sealed class IpcServer
         }
     }
 
+    /// <summary>
+    /// 수신된 메시지의 Method에 따라 적절한 핸들러로 디스패치합니다.
+    /// </summary>
     private async Task<IpcMessage> ProcessMessage(IpcMessage message)
     {
         try
@@ -92,6 +129,13 @@ public sealed class IpcServer
         }
     }
 
+    #endregion
+
+    #region Action Handlers
+
+    /// <summary>
+    /// 핑 요청을 처리하여 프로세스 정보를 반환합니다.
+    /// </summary>
     private Task<IpcMessage> HandlePing(IpcMessage message)
     {
         var response = new PongResponse
@@ -102,6 +146,9 @@ public sealed class IpcServer
         return Task.FromResult(IpcSerializer.CreateResponse(message.Id, response));
     }
 
+    /// <summary>
+    /// 비주얼 트리 스냅샷을 생성합니다. RefRegistry를 초기화하고 새 참조를 할당.
+    /// </summary>
     private async Task<IpcMessage> HandleSnapshot(IpcMessage message)
     {
         var request = message.Payload.HasValue
@@ -133,6 +180,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 지정된 요소를 클릭합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleClick(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<ClickRequest>(message.Payload!.Value);
@@ -152,6 +202,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 지정된 요소에 텍스트를 입력합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleType(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<TypeTextRequest>(message.Payload!.Value);
@@ -171,6 +224,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// Selector 컨트롤에서 항목을 선택합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleSelect(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<SelectRequest>(message.Payload!.Value);
@@ -189,6 +245,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// CheckBox/ToggleButton의 토글 상태를 전환합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleToggle(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<ToggleRequest>(message.Payload!.Value);
@@ -207,6 +266,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// TreeViewItem/Expander를 확장 또는 축소합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleExpand(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<ExpandRequest>(message.Payload!.Value);
@@ -226,6 +288,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// ScrollViewer의 스크롤 위치를 변경합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleScroll(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<ScrollRequest>(message.Payload!.Value);
@@ -244,6 +309,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 요소의 프로퍼티 값을 조회합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleGetProperty(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<GetPropertyRequest>(message.Payload!.Value);
@@ -260,6 +328,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 요소의 데이터 바인딩 정보를 조회합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleGetBindings(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<GetBindingsRequest>(message.Payload!.Value);
@@ -276,6 +347,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 윈도우 또는 특정 요소의 스크린샷을 캡처합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleScreenshot(IpcMessage message)
     {
         var request = message.Payload.HasValue
@@ -296,6 +370,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 프로퍼티 값이 기대값과 일치하는지 검증합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleAssert(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<AssertRequest>(message.Payload!.Value);
@@ -320,6 +397,9 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
+    /// <summary>
+    /// 비주얼 트리에서 조건에 맞는 요소를 검색합니다.
+    /// </summary>
     private async Task<IpcMessage> HandleFind(IpcMessage message)
     {
         var request = IpcSerializer.DeserializePayload<FindElementRequest>(message.Payload!.Value);
@@ -337,5 +417,5 @@ public sealed class IpcServer
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
-    public void Stop() => _cts?.Cancel();
+    #endregion
 }

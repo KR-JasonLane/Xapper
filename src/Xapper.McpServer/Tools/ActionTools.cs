@@ -5,6 +5,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// 클릭, 텍스트 입력 등 기본 UI 액션 MCP 도구를 제공하는 클래스.
+/// </summary>
 [McpServerToolType]
 public sealed class ActionTools
 {

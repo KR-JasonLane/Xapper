@@ -53,6 +53,8 @@ dotnet run --project src/Xapper.McpServer
 - All UI thread access must go through Dispatcher.InvokeAsync
 - Action execution: AutomationPeer first, RaiseEvent fallback
 - Element refs: reassigned on each snapshot, use WeakReference<DependencyObject>
+- XML doc comments (`/// <summary>`) required on all classes, public methods, and public properties
+- `#region` blocks required to organize class members (Fields, Constructor, Public Methods, Private Methods, etc.)
 
 ## Maintenance Notes
 

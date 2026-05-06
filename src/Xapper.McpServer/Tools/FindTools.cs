@@ -6,6 +6,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// 비주얼 트리 요소 검색 MCP 도구를 제공하는 클래스.
+/// </summary>
 [McpServerToolType]
 public sealed class FindTools
 {

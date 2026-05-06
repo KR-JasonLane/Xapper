@@ -1,5 +1,10 @@
+// Xapper MCP 서버 진입점.
+// stdio 전송을 통해 AI 에이전트와 통신하며, WPF 프로세스 인젝션 및 UI 자동화 도구를 제공.
+// 환경 변수 XAPPER_INSPECTOR_DLL, XAPPER_INJECTOR_LAUNCHER로 경로 오버라이드 가능.
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using Xapper.Injector;
 using Xapper.McpServer;
@@ -7,7 +12,10 @@ using Xapper.McpServer.Tools;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Resolve paths: check environment variables first, then fall back to well-known locations.
+// MCP SDK의 StdioServerTransport가 stdout을 점유하므로 콘솔 로깅 비활성화
+builder.Logging.ClearProviders();
+
+// 경로 해석: 환경 변수 우선, 없으면 빌드 출력 기준 상대 경로 사용
 var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var inspectorDllPath = Environment.GetEnvironmentVariable("XAPPER_INSPECTOR_DLL")
     ?? Path.Combine(projectRoot, "src", "Xapper.Inspector", "bin", "Debug", "net9.0-windows", "Xapper.Inspector.dll");

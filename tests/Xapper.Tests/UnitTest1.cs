@@ -5,6 +5,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.Tests;
 
+/// <summary>
+/// IpcSerializer의 직렬화/역직렬화 및 팩토리 메서드를 검증하는 테스트 클래스.
+/// </summary>
 public class IpcSerializerTests
 {
     [Fact]
@@ -67,6 +70,9 @@ public class IpcSerializerTests
     }
 }
 
+/// <summary>
+/// ElementSnapshot의 JSON 직렬화 라운드트립을 검증하는 테스트 클래스.
+/// </summary>
 public class ElementSnapshotTests
 {
     [Fact]
@@ -100,6 +106,9 @@ public class ElementSnapshotTests
     }
 }
 
+/// <summary>
+/// IpcPipeNames의 파이프 이름 생성 규칙을 검증하는 테스트 클래스.
+/// </summary>
 public class IpcPipeNamesTests
 {
     [Fact]

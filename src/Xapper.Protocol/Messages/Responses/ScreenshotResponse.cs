@@ -1,8 +1,16 @@
 namespace Xapper.Protocol.Messages.Responses;
 
+/// <summary>
+/// 스크린샷 캡처 결과 응답.
+/// </summary>
 public sealed class ScreenshotResponse
 {
+    /// <summary>캡처된 이미지의 Base64 인코딩 PNG 데이터.</summary>
     public required string Base64Png { get; set; }
+
+    /// <summary>캡처된 이미지의 너비 (픽셀).</summary>
     public int Width { get; set; }
+
+    /// <summary>캡처된 이미지의 높이 (픽셀).</summary>
     public int Height { get; set; }
 }

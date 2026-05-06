@@ -7,6 +7,9 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.McpServer.Tools;
 
+/// <summary>
+/// 비주얼 트리 스냅샷 MCP 도구를 제공하는 클래스. text/json 포맷 출력 지원.
+/// </summary>
 [McpServerToolType]
 public sealed class SnapshotTools
 {

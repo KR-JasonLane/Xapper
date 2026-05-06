@@ -7,14 +7,28 @@ using Xapper.Protocol.Messages.Responses;
 
 namespace Xapper.Inspector.VisualTree;
 
+/// <summary>
+/// 비주얼 트리를 깊이 우선 탐색하여 조건에 매칭되는 UI 요소를 검색하는 클래스.
+/// 모든 검색 조건은 부분 매칭이며 대소문자를 무시.
+/// </summary>
 public sealed class ElementFinder
 {
+    /// <summary>
+    /// 루트 요소부터 비주얼 트리를 탐색하여 조건에 맞는 요소를 검색합니다.
+    /// 매칭된 요소는 RefRegistry에 등록되어 이후 액션에서 참조 가능.
+    /// </summary>
+    /// <param name="root">탐색 시작 지점.</param>
+    /// <param name="request">검색 조건 (Name, AutomationId, Type, Text).</param>
+    /// <param name="registry">매칭된 요소를 등록할 참조 레지스트리.</param>
+    /// <returns>매칭된 요소 목록.</returns>
     public FindElementResponse Find(DependencyObject root, FindElementRequest request, RefRegistry registry)
     {
         var response = new FindElementResponse();
         SearchTree(root, request, registry, response);
         return response;
     }
+
+    #region Private Methods
 
     private void SearchTree(DependencyObject element, FindElementRequest request, RefRegistry registry, FindElementResponse response)
     {
@@ -80,4 +94,6 @@ public sealed class ElementFinder
             _ => null
         };
     }
+
+    #endregion
 }
