@@ -408,3 +408,5 @@ mcp_stderr.txt
 # Claude Code
 .claude/
 .mcp.json
+CLAUDE.md
+Plan/

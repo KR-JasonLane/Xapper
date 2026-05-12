@@ -1,6 +1,6 @@
 // Xapper MCP 서버 진입점.
 // stdio 전송을 통해 AI 에이전트와 통신하며, WPF 프로세스 인젝션 및 UI 자동화 도구를 제공.
-// 환경 변수 XAPPER_INSPECTOR_DLL, XAPPER_INJECTOR_LAUNCHER로 경로 오버라이드 가능.
+// 환경 변수 XAPPER_INSPECTOR_DLL, XAPPER_GENERIC_INJECTOR_DIR로 경로 오버라이드 가능.
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,11 +19,11 @@ builder.Logging.ClearProviders();
 var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var inspectorDllPath = Environment.GetEnvironmentVariable("XAPPER_INSPECTOR_DLL")
     ?? Path.Combine(projectRoot, "src", "Xapper.Inspector", "bin", "Debug", "net9.0-windows", "Xapper.Inspector.dll");
-var injectorLauncherPath = Environment.GetEnvironmentVariable("XAPPER_INJECTOR_LAUNCHER")
-    ?? Path.Combine(projectRoot, "external", "snoop-bin", "Snoop.InjectorLauncher.x64.exe");
+var genericInjectorDir = Environment.GetEnvironmentVariable("XAPPER_GENERIC_INJECTOR_DIR")
+    ?? Path.Combine(projectRoot, "external", "snoop-bin");
 
 builder.Services.AddSingleton<SessionManager>();
-builder.Services.AddSingleton(new WpfProcessInjector(inspectorDllPath, injectorLauncherPath));
+builder.Services.AddSingleton(new WpfProcessInjector(inspectorDllPath, genericInjectorDir));
 
 builder.Services.AddMcpServer(options =>
 {

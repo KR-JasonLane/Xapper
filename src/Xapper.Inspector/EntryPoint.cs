@@ -1,11 +1,10 @@
 using System.IO;
-using System.Reflection;
 using System.Runtime.Loader;
 
 namespace Xapper.Inspector;
 
 /// <summary>
-/// Snoop InjectorLauncher에 의해 호출되는 주입 진입점.
+/// GenericInjector의 ExecuteInDefaultAppDomain에 의해 호출되는 주입 진입점.
 /// 대상 WPF 프로세스 내부에서 실행되며 어셈블리 리졸버 등록 후 IPC 서버를 시작.
 /// </summary>
 public static class EntryPoint
@@ -20,10 +19,10 @@ public static class EntryPoint
     #region Public Methods
 
     /// <summary>
-    /// 주입 초기화 메서드. InjectorLauncher의 ExecuteInDefaultAppDomain에 의해 호출됨.
+    /// 주입 초기화 메서드. GenericInjector의 ExecuteInDefaultAppDomain에 의해 호출됨.
     /// 어셈블리 리졸버를 등록한 뒤 Named Pipe IPC 서버를 백그라운드에서 시작.
     /// </summary>
-    /// <param name="args">InjectorLauncher로부터 전달받는 인자 문자열.</param>
+    /// <param name="args">GenericInjector로부터 전달받는 인자 문자열.</param>
     /// <returns>성공 시 0, 실패 시 1.</returns>
     public static int Initialize(string args)
     {
@@ -33,8 +32,20 @@ public static class EntryPoint
 
             // .NET Core의 ExecuteInDefaultAppDomain은 의존성을 자동으로 리졸브하지 않으므로
             // 의존 타입 참조 전에 어셈블리 리졸버를 먼저 등록해야 함
-            var thisDir = Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location)!;
-            Log($"Assembly dir: {thisDir}");
+            var assemblyLocation = typeof(EntryPoint).Assembly.Location;
+            var thisDir = !string.IsNullOrEmpty(assemblyLocation)
+                ? Path.GetDirectoryName(assemblyLocation)
+                : null;
+
+            if (string.IsNullOrEmpty(thisDir))
+            {
+                thisDir = AppContext.BaseDirectory;
+                Log($"Assembly.Location was empty, using AppContext.BaseDirectory: {thisDir}");
+            }
+            else
+            {
+                Log($"Assembly dir: {thisDir}");
+            }
 
             AssemblyLoadContext.Default.Resolving += (ctx, name) =>
             {
