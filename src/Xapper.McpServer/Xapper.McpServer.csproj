@@ -7,11 +7,29 @@
   <ItemGroup>
     <ProjectReference Include="..\Xapper.Protocol\Xapper.Protocol.csproj" />
     <ProjectReference Include="..\Xapper.Injector\Xapper.Injector.csproj" />
+    <ProjectReference Include="..\Xapper.Inspector\Xapper.Inspector.csproj"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
+  </ItemGroup>
+
+  <!-- 인젝션 페이로드 임베딩: GenericInjector + Inspector 빌드 출력물 -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.x64.dll"
+                      LogicalName="Xapper.Payload.Snoop.GenericInjector.x64.dll" />
+    <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.x86.dll"
+                      LogicalName="Xapper.Payload.Snoop.GenericInjector.x86.dll" />
+    <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.ARM64.dll"
+                      LogicalName="Xapper.Payload.Snoop.GenericInjector.ARM64.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Inspector.dll"
+                      LogicalName="Xapper.Payload.Xapper.Inspector.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Protocol.dll"
+                      LogicalName="Xapper.Payload.Xapper.Protocol.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Inspector.deps.json"
+                      LogicalName="Xapper.Payload.Xapper.Inspector.deps.json" />
   </ItemGroup>
 
 </Project>

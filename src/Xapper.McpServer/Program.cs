@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using Xapper.Injector;
 using Xapper.McpServer;
+using Xapper.McpServer.Infrastructure;
 using Xapper.McpServer.Tools;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -15,12 +16,25 @@ var builder = Host.CreateApplicationBuilder(args);
 // MCP SDK의 StdioServerTransport가 stdout을 점유하므로 콘솔 로깅 비활성화
 builder.Logging.ClearProviders();
 
-// 경로 해석: 환경 변수 우선, 없으면 빌드 출력 기준 상대 경로 사용
-var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-var inspectorDllPath = Environment.GetEnvironmentVariable("XAPPER_INSPECTOR_DLL")
-    ?? Path.Combine(projectRoot, "src", "Xapper.Inspector", "bin", "Debug", "net9.0-windows", "Xapper.Inspector.dll");
-var genericInjectorDir = Environment.GetEnvironmentVariable("XAPPER_GENERIC_INJECTOR_DIR")
-    ?? Path.Combine(projectRoot, "external", "snoop-bin");
+// 경로 해석: 환경 변수 우선, 없으면 임베디드 리소스 추출
+var envInspector = Environment.GetEnvironmentVariable("XAPPER_INSPECTOR_DLL");
+var envInjectorDir = Environment.GetEnvironmentVariable("XAPPER_GENERIC_INJECTOR_DIR");
+
+string inspectorDllPath;
+string genericInjectorDir;
+
+if (envInspector is not null && envInjectorDir is not null)
+{
+    inspectorDllPath = envInspector;
+    genericInjectorDir = envInjectorDir;
+}
+else
+{
+    var extractor = new PayloadExtractor();
+    extractor.ExtractAll();
+    inspectorDllPath = envInspector ?? extractor.InspectorDllPath;
+    genericInjectorDir = envInjectorDir ?? extractor.GenericInjectorDir;
+}
 
 builder.Services.AddSingleton<SessionManager>();
 builder.Services.AddSingleton(new WpfProcessInjector(inspectorDllPath, genericInjectorDir));

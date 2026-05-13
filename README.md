@@ -4,21 +4,23 @@
 
 <b>
 
-- [개요]
-- [기술 및 도구]
-- [라이브러리]
-- [프로젝트 구조]
-- [기능 구현]
-  - [프로세스 탐색 및 인젝션]
-  - [UI 트리 스냅샷]
-  - [요소 검색]
-  - [UI 자동 조작]
-  - [진단 및 검증]
-- [사용 방법]
-  - [빌드]
-  - [MCP 서버 연결 (Claude Desktop)]
-  - [MCP 서버 연결 (Claude Code)]
-  - [사용 예시]
+- [개요](#xapper-개요)
+- [지원 환경](#지원-환경)
+- [기술 및 도구](#기술-및-도구)
+- [라이브러리](#라이브러리)
+- [프로젝트 구조](#프로젝트-구조)
+- [기능 구현](#기능-구현)
+  - [프로세스 탐색 및 인젝션](#1-프로세스-탐색-및-인젝션)
+  - [UI 트리 스냅샷](#2-ui-트리-스냅샷)
+  - [요소 검색](#3-요소-검색)
+  - [UI 자동 조작](#4-ui-자동-조작)
+  - [진단 및 검증](#5-진단-및-검증)
+- [설치 및 설정](#설치-및-설정)
+  - [사전 요구사항](#사전-요구사항)
+  - [빌드](#빌드)
+  - [MCP 서버 연결 (Claude Desktop)](#mcp-서버-연결-claude-desktop)
+  - [MCP 서버 연결 (Claude Code)](#mcp-서버-연결-claude-code)
+  - [사용 예시](#사용-예시)
 
 </b>
 
@@ -33,6 +35,37 @@
 > **개발 환경 :** Windows 11, Visual Studio 2022 Community, .NET 9.0
 >
 > **문의 :** malbox5034@naver.com
+
+<br/>
+
+## **지원 환경**
+
+### **운영체제**
+
+| OS | 지원 |
+|:---|:---:|
+| Windows 10 (x64) | O |
+| Windows 11 (x64, ARM64) | O |
+| macOS / Linux | X (WPF 전용) |
+
+### **대상 WPF 앱 .NET 버전**
+
+Xapper가 인젝션할 수 있는 대상 WPF 애플리케이션의 .NET 런타임 버전입니다.
+
+| 런타임 | 지원 |
+|:---|:---:|
+| .NET 9.0 | O |
+| .NET 8.0 | O |
+| .NET 7.0 | O |
+| .NET 6.0 | O |
+| .NET Framework 4.x | X |
+
+### **빌드 요구사항**
+
+| 항목 | 버전 |
+|:---|:---|
+| .NET SDK | 9.0 이상 |
+| Windows SDK | 10.0.17763.0 이상 (WPF 빌드용) |
 
 <br/>
 
@@ -52,7 +85,7 @@
 |:---|---:|:---:|
 |ModelContextProtocol|1.2.0|MCP 서버 SDK (stdio transport)|
 |Microsoft.Extensions.Hosting|10.0.7|호스팅/DI 프레임워크|
-|Snoop.InjectorLauncher|6.1.0|WPF 프로세스 인젝션 (pre-built)|
+|Snoop GenericInjector|6.1.0|WPF 프로세스 DLL 인젝션 (네이티브)|
 |xUnit|2.9.3|단위 테스트|
 
 <br/>
@@ -62,15 +95,17 @@
 ```
 src/
 ├── Xapper.Protocol        IPC 메시지 계약 (net9.0, WPF 무의존)
-├── Xapper.Injector        Snoop 인젝터 래퍼 (서브프로세스 호출)
+├── Xapper.Injector        네이티브 인젝터 (P/Invoke로 DLL 주입)
 ├── Xapper.Inspector       인젝션 라이브러리 (대상 WPF 앱 내부에서 실행)
 └── Xapper.McpServer       MCP 서버 (stdio transport, 15개 도구)
 tests/
 ├── Xapper.TestApp         샘플 WPF 로그인 폼
 └── Xapper.Tests           단위 테스트 (xUnit)
 external/
-└── snoop-bin/             Snoop InjectorLauncher 바이너리
+└── snoop-bin/             Snoop GenericInjector 네이티브 DLL
 ```
+
+Inspector와 GenericInjector DLL은 McpServer에 **임베디드 리소스로 내장**되어 있어 빌드된 실행 파일만으로 동작합니다. 별도의 경로 설정이나 환경변수 없이 바로 사용 가능합니다.
 
 <br/>
 
@@ -78,7 +113,7 @@ external/
 
 ### **1. 프로세스 탐색 및 인젝션**
 - `xapper_list_processes` : 실행 중인 WPF 프로세스 목록 조회
-- `xapper_attach` : Snoop 인젝터를 통해 대상 프로세스에 Inspector DLL 주입
+- `xapper_attach` : P/Invoke 네이티브 인젝션으로 대상 프로세스에 Inspector DLL 주입
 - `xapper_detach` : Named Pipe 연결 해제 및 정리
 - Named Pipe 기반 IPC (4바이트 LE 길이 접두사 + UTF-8 JSON)
 
@@ -107,17 +142,29 @@ external/
 
 <br/>
 
-## **사용 방법**
+## **설치 및 설정**
+
+### **사전 요구사항**
+
+- **Windows 10/11** (x64 또는 ARM64)
+- **.NET 9.0 SDK** ([다운로드](https://dotnet.microsoft.com/download/dotnet/9.0))
+- **MCP 클라이언트** (Claude Desktop, Claude Code 등)
 
 ### **빌드**
 
 ```bash
-git clone https://github.com/jameslee/Xapper.git
+git clone https://github.com/KR-JasonLane/Xapper.git
 cd Xapper
 dotnet build
 ```
 
-> Windows 전용입니다. WPF 인젝션은 Windows에서만 동작합니다.
+빌드가 완료되면 실행 파일이 생성됩니다:
+
+```
+src/Xapper.McpServer/bin/Debug/net9.0-windows/Xapper.McpServer.exe
+```
+
+> 이 실행 파일 하나로 동작합니다. Inspector DLL과 GenericInjector DLL이 리소스로 내장되어 있어 별도 파일 복사나 환경변수 설정이 필요 없습니다.
 
 ### **MCP 서버 연결 (Claude Desktop)**
 
@@ -127,11 +174,13 @@ dotnet build
 {
   "mcpServers": {
     "xapper": {
-      "command": "D:\\dev\\Xapper\\src\\Xapper.McpServer\\bin\\Debug\\net9.0-windows\\Xapper.McpServer.exe"
+      "command": "C:\\경로\\Xapper\\src\\Xapper.McpServer\\bin\\Debug\\net9.0-windows\\Xapper.McpServer.exe"
     }
   }
 }
 ```
+
+> `command`에 빌드된 `Xapper.McpServer.exe`의 **절대 경로**를 입력합니다.
 
 ### **MCP 서버 연결 (Claude Code)**
 
@@ -141,11 +190,33 @@ dotnet build
 {
   "mcpServers": {
     "xapper": {
-      "command": "D:\\dev\\Xapper\\src\\Xapper.McpServer\\bin\\Debug\\net9.0-windows\\Xapper.McpServer.exe"
+      "command": "C:\\경로\\Xapper\\src\\Xapper.McpServer\\bin\\Debug\\net9.0-windows\\Xapper.McpServer.exe"
     }
   }
 }
 ```
+
+또는 `dotnet run`으로 실행:
+
+```json
+{
+  "mcpServers": {
+    "xapper": {
+      "command": "dotnet",
+      "args": ["run", "--project", "C:\\경로\\Xapper\\src\\Xapper.McpServer"]
+    }
+  }
+}
+```
+
+### **환경변수 (선택, 개발자용)**
+
+일반 사용 시 환경변수 설정은 **불필요**합니다. 개발/디버깅 시 DLL 경로를 직접 지정하려면:
+
+| 환경변수 | 설명 |
+|:---|:---|
+| `XAPPER_INSPECTOR_DLL` | Inspector DLL 경로 오버라이드 |
+| `XAPPER_GENERIC_INJECTOR_DIR` | GenericInjector DLL 디렉토리 오버라이드 |
 
 ### **사용 예시**
 
@@ -199,7 +270,7 @@ AI 에이전트가 자동으로 수행하는 흐름:
 │  AI Agent       │ ◄──────────────────────► │  Xapper.McpServer │
 │  (Claude, etc.) │                           └────────┬─────────┘
 └─────────────────┘                                    │
-                                                       │ Snoop Injector
+                                              P/Invoke │ Native Injection
                                                        ▼
                                               ┌──────────────────┐
                                               │  Target WPF App  │
@@ -211,10 +282,12 @@ AI 에이전트가 자동으로 수행하는 흐름:
 ```
 
 1. AI 에이전트가 MCP 프로토콜로 도구 호출
-2. McpServer가 Snoop InjectorLauncher를 통해 Inspector DLL을 대상 프로세스에 주입
-3. Inspector가 Named Pipe 서버를 열고 McpServer와 IPC 연결
-4. McpServer가 Inspector에 명령 전달 → Inspector가 Dispatcher를 통해 UI 스레드에서 실행
-5. 결과를 MCP 응답으로 반환
+2. McpServer가 임베디드 리소스에서 DLL을 추출 (최초 1회, `%TEMP%\Xapper\`)
+3. NativeInjector가 P/Invoke(CreateRemoteThread + LoadLibraryW)로 GenericInjector DLL을 대상 프로세스에 로드
+4. GenericInjector가 Inspector DLL의 EntryPoint.Initialize를 호출하여 인젝션 완료
+5. Inspector가 Named Pipe 서버를 열고 McpServer와 IPC 연결
+6. McpServer가 Inspector에 명령 전달 → Inspector가 Dispatcher를 통해 UI 스레드에서 실행
+7. 결과를 MCP 응답으로 반환
 
 <br/>
 <br/>
