@@ -4,13 +4,13 @@ namespace Xapper.Injector;
 
 /// <summary>
 /// NativeInjector를 사용하여 대상 WPF 프로세스에 Xapper.Inspector를 주입하는 클래스.
-/// P/Invoke를 통해 GenericInjector DLL을 직접 로드하고 ExecuteInDefaultAppDomain을 호출.
+/// 대상 프로세스의 .NET 런타임 버전에 맞는 Inspector DLL을 자동 선택하여 주입.
 /// </summary>
 public sealed class WpfProcessInjector
 {
     #region Fields
 
-    private readonly string _inspectorDllPath;
+    private readonly string _inspectorBaseDir;
     private readonly NativeInjector _nativeInjector;
 
     #endregion
@@ -20,14 +20,14 @@ public sealed class WpfProcessInjector
     /// <summary>
     /// <see cref="WpfProcessInjector"/>의 새 인스턴스를 생성합니다.
     /// </summary>
-    /// <param name="inspectorDllPath">주입할 Xapper.Inspector.dll의 경로.</param>
+    /// <param name="inspectorBaseDir">TFM별 Inspector DLL이 위치한 기본 디렉토리 경로.</param>
     /// <param name="genericInjectorDir">Snoop GenericInjector DLL이 위치한 디렉토리 경로.</param>
-    public WpfProcessInjector(string inspectorDllPath, string genericInjectorDir)
+    public WpfProcessInjector(string inspectorBaseDir, string genericInjectorDir)
     {
-        if (string.IsNullOrWhiteSpace(inspectorDllPath))
-            throw new ArgumentException("Inspector DLL path is required.", nameof(inspectorDllPath));
+        if (string.IsNullOrWhiteSpace(inspectorBaseDir))
+            throw new ArgumentException("Inspector base directory is required.", nameof(inspectorBaseDir));
 
-        _inspectorDllPath = inspectorDllPath;
+        _inspectorBaseDir = inspectorBaseDir;
         _nativeInjector = new NativeInjector(genericInjectorDir);
     }
 
@@ -37,7 +37,7 @@ public sealed class WpfProcessInjector
 
     /// <summary>
     /// 대상 프로세스에 Xapper.Inspector.dll을 주입합니다.
-    /// NativeInjector를 사용하여 GenericInjector DLL 로드 후 EntryPoint.Initialize를 호출.
+    /// 대상의 .NET 런타임 버전을 감지하여 해당 TFM의 Inspector DLL을 선택.
     /// </summary>
     /// <param name="processId">주입 대상 WPF 프로세스의 PID.</param>
     /// <exception cref="InvalidOperationException">프로세스에 메인 윈도우가 없거나 주입에 실패한 경우.</exception>
@@ -50,14 +50,16 @@ public sealed class WpfProcessInjector
             throw new InvalidOperationException(
                 $"Process {processId} ({process.ProcessName}) has no visible main window");
 
-        if (!File.Exists(_inspectorDllPath))
+        var inspectorDllPath = ResolveInspectorDll(processId);
+
+        if (!File.Exists(inspectorDllPath))
             throw new FileNotFoundException(
-                $"Xapper.Inspector.dll not found at: {_inspectorDllPath}",
-                _inspectorDllPath);
+                $"Xapper.Inspector.dll not found at: {inspectorDllPath}",
+                inspectorDllPath);
 
         _nativeInjector.Inject(
             processId,
-            _inspectorDllPath,
+            inspectorDllPath,
             "Xapper.Inspector.EntryPoint",
             "Initialize");
     }
@@ -117,6 +119,42 @@ public sealed class WpfProcessInjector
             }
         }
         return result;
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// 대상 프로세스의 .NET 런타임에 맞는 Inspector DLL 경로를 결정합니다.
+    /// TFM이 정확히 일치하지 않으면 가장 가까운 하위 버전으로 폴백.
+    /// </summary>
+    private string ResolveInspectorDll(int processId)
+    {
+        var tfm = NativeInjector.DetectTargetFramework(processId);
+
+        if (tfm is null)
+            throw new InvalidOperationException(
+                $"Process {processId} does not appear to be a .NET Core application. " +
+                ".NET Framework is not supported.");
+
+        // 정확한 TFM 디렉토리가 있으면 사용
+        var exactPath = Path.Combine(_inspectorBaseDir, tfm, "Xapper.Inspector.dll");
+        if (File.Exists(exactPath))
+            return exactPath;
+
+        // 정확한 TFM이 없으면 가장 가까운 하위 버전으로 폴백
+        // (예: net10.0-windows 앱은 net9.0-windows Inspector 사용)
+        string[] supportedTfms = ["net9.0-windows", "net8.0-windows", "net7.0-windows", "net6.0-windows"];
+        foreach (var fallback in supportedTfms)
+        {
+            var fallbackPath = Path.Combine(_inspectorBaseDir, fallback, "Xapper.Inspector.dll");
+            if (File.Exists(fallbackPath))
+                return fallbackPath;
+        }
+
+        throw new FileNotFoundException(
+            $"No Inspector DLL found for TFM '{tfm}' in {_inspectorBaseDir}");
     }
 
     #endregion

@@ -215,7 +215,7 @@ src/Xapper.McpServer/bin/Debug/net9.0-windows/Xapper.McpServer.exe
 
 | 환경변수 | 설명 |
 |:---|:---|
-| `XAPPER_INSPECTOR_DLL` | Inspector DLL 경로 오버라이드 |
+| `XAPPER_INSPECTOR_BASE_DIR` | Inspector DLL 기본 디렉토리 오버라이드 (TFM별 하위 폴더 포함) |
 | `XAPPER_GENERIC_INJECTOR_DIR` | GenericInjector DLL 디렉토리 오버라이드 |
 
 ### **사용 예시**

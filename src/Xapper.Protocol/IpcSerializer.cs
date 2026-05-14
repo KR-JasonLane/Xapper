@@ -1,5 +1,8 @@
 using System.Buffers;
 using System.Text.Json;
+#if !NET7_0_OR_GREATER
+using Xapper.Protocol.Polyfills;
+#endif
 
 namespace Xapper.Protocol;
 

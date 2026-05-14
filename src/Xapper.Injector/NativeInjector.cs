@@ -276,10 +276,12 @@ public sealed class NativeInjector
     }
 
     /// <summary>
-    /// 대상 프로세스의 로드된 coreclr.dll 경로에서 .NET 런타임 메이저 버전을 감지합니다.
+    /// 대상 프로세스의 로드된 coreclr.dll 경로에서 .NET 런타임 TFM을 감지합니다.
     /// 예: Microsoft.NETCore.App\9.0.16 → "net9.0-windows"
     /// </summary>
-    private static string DetectFrameworkVersion(int processId)
+    /// <param name="processId">대상 프로세스 PID.</param>
+    /// <returns>감지된 TFM (예: "net9.0-windows"). .NET Core가 아니면 null.</returns>
+    public static string? DetectTargetFramework(int processId)
     {
         var process = Process.GetProcessById(processId);
 
@@ -288,7 +290,6 @@ public sealed class NativeInjector
             if (module.FileName is null)
                 continue;
 
-            // coreclr.dll 경로에서 버전 추출: ...\Microsoft.NETCore.App\{major}.{minor}.{patch}\coreclr.dll
             if (!module.ModuleName.Equals("coreclr.dll", StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -297,14 +298,22 @@ public sealed class NativeInjector
                 continue;
 
             var versionDir = Path.GetFileName(dir);
-            if (versionDir is not null && Version.TryParse(versionDir, out _))
-                // GenericInjector는 .NET Core 호스팅에 "net6.0-windows" 식별자를 사용.
-                // hostfxr 기반 호스팅은 .NET 6~9+ 모두 동일하므로 고정값 사용.
-                return "net6.0-windows";
+            if (versionDir is not null && Version.TryParse(versionDir, out var version))
+                return $"net{version.Major}.{version.Minor}-windows";
         }
 
-        // coreclr.dll을 찾지 못한 경우 .NET Framework로 가정
-        return "net4.0-windows";
+        return null;
+    }
+
+    /// <summary>
+    /// GenericInjector에 전달할 프레임워크 식별자를 반환합니다.
+    /// GenericInjector는 "net6.0-windows"만 인식하므로 .NET Core 앱은 모두 이 값을 사용.
+    /// </summary>
+    private static string GetGenericInjectorFramework(int processId)
+    {
+        return DetectTargetFramework(processId) is not null
+            ? "net6.0-windows"
+            : "net4.0-windows";
     }
 
     /// <summary>
@@ -317,7 +326,7 @@ public sealed class NativeInjector
     {
         // GenericInjector가 기대하는 파라미터 포맷:
         // "{framework}<|>{assemblyPath}<|>{typeName}<|>{methodName}<|><|>{logFile}"
-        var framework = DetectFrameworkVersion(processId);
+        var framework = GetGenericInjectorFramework(processId);
         var logFile = Path.Combine(Path.GetTempPath(), $"xapper_inject_{processId}.log");
         var paramString = $"{framework}<|>{assemblyPath}<|>{typeName}<|>{methodName}<|><|>{logFile}";
         var paramBytes = Encoding.Unicode.GetBytes(paramString + '\0');

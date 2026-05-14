@@ -16,20 +16,43 @@
     <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
   </ItemGroup>
 
-  <!-- 인젝션 페이로드 임베딩: GenericInjector + Inspector 빌드 출력물 -->
+  <!-- 인젝션 페이로드 임베딩: GenericInjector + 멀티타겟 Inspector 빌드 출력물 -->
   <ItemGroup>
+    <!-- GenericInjector 네이티브 DLL (아키텍처별) -->
     <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.x64.dll"
                       LogicalName="Xapper.Payload.Snoop.GenericInjector.x64.dll" />
     <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.x86.dll"
                       LogicalName="Xapper.Payload.Snoop.GenericInjector.x86.dll" />
     <EmbeddedResource Include="..\..\external\snoop-bin\Snoop.GenericInjector.ARM64.dll"
                       LogicalName="Xapper.Payload.Snoop.GenericInjector.ARM64.dll" />
+    <!-- Inspector: net6.0-windows -->
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net6.0-windows\Xapper.Inspector.dll"
+                      LogicalName="Xapper.Payload.net6.0-windows.Xapper.Inspector.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net6.0-windows\Xapper.Protocol.dll"
+                      LogicalName="Xapper.Payload.net6.0-windows.Xapper.Protocol.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net6.0-windows\Xapper.Inspector.deps.json"
+                      LogicalName="Xapper.Payload.net6.0-windows.Xapper.Inspector.deps.json" />
+    <!-- Inspector: net7.0-windows -->
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net7.0-windows\Xapper.Inspector.dll"
+                      LogicalName="Xapper.Payload.net7.0-windows.Xapper.Inspector.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net7.0-windows\Xapper.Protocol.dll"
+                      LogicalName="Xapper.Payload.net7.0-windows.Xapper.Protocol.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net7.0-windows\Xapper.Inspector.deps.json"
+                      LogicalName="Xapper.Payload.net7.0-windows.Xapper.Inspector.deps.json" />
+    <!-- Inspector: net8.0-windows -->
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net8.0-windows\Xapper.Inspector.dll"
+                      LogicalName="Xapper.Payload.net8.0-windows.Xapper.Inspector.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net8.0-windows\Xapper.Protocol.dll"
+                      LogicalName="Xapper.Payload.net8.0-windows.Xapper.Protocol.dll" />
+    <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net8.0-windows\Xapper.Inspector.deps.json"
+                      LogicalName="Xapper.Payload.net8.0-windows.Xapper.Inspector.deps.json" />
+    <!-- Inspector: net9.0-windows -->
     <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Inspector.dll"
-                      LogicalName="Xapper.Payload.Xapper.Inspector.dll" />
+                      LogicalName="Xapper.Payload.net9.0-windows.Xapper.Inspector.dll" />
     <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Protocol.dll"
-                      LogicalName="Xapper.Payload.Xapper.Protocol.dll" />
+                      LogicalName="Xapper.Payload.net9.0-windows.Xapper.Protocol.dll" />
     <EmbeddedResource Include="..\Xapper.Inspector\bin\$(Configuration)\net9.0-windows\Xapper.Inspector.deps.json"
-                      LogicalName="Xapper.Payload.Xapper.Inspector.deps.json" />
+                      LogicalName="Xapper.Payload.net9.0-windows.Xapper.Inspector.deps.json" />
   </ItemGroup>
 
 </Project>
