@@ -159,17 +159,36 @@ public sealed class IpcServer
         {
             _refRegistry.Clear();
 
-            DependencyObject? root = null;
+            // 특정 요소가 지정된 경우 그 요소부터 탐색
             if (request.RootRef.HasValue)
             {
-                root = _refRegistry.Resolve(request.RootRef.Value);
+                var root = _refRegistry.Resolve(request.RootRef.Value)
+                    ?? throw new InvalidOperationException($"Element ref={request.RootRef} not found");
+                return _treeWalker.Walk(root, _refRegistry, request.MaxDepth);
             }
-            root ??= Application.Current.MainWindow;
 
-            if (root == null)
-                throw new InvalidOperationException("No root element found");
+            // 모든 열린 윈도우를 탐색 (다이얼로그 등 별도 Window 포함)
+            var windows = Application.Current.Windows;
+            if (windows.Count == 0)
+                throw new InvalidOperationException("No windows found");
 
-            return _treeWalker.Walk(root, _refRegistry, request.MaxDepth);
+            // 윈도우가 1개면 그대로 반환
+            if (windows.Count == 1)
+                return _treeWalker.Walk(windows[0], _refRegistry, request.MaxDepth);
+
+            // 여러 윈도우면 가상 루트 아래에 배치
+            var virtualRoot = new ElementSnapshot
+            {
+                Ref = 0,
+                Type = "Application",
+                IsEnabled = true,
+                IsVisible = true
+            };
+            foreach (Window window in windows)
+            {
+                virtualRoot.Children.Add(_treeWalker.Walk(window, _refRegistry, request.MaxDepth));
+            }
+            return virtualRoot;
         });
 
         var response = new SnapshotResponse
@@ -195,10 +214,13 @@ public sealed class IpcServer
 
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            ClickAction.Execute(element);
+            ClickAction.Execute(element, request.X, request.Y);
         });
 
-        var response = new ActionResponse { Success = true, Message = $"Clicked ref={request.Ref}" };
+        var posInfo = request.X.HasValue && request.Y.HasValue
+            ? $" at ({request.X:F2},{request.Y:F2})"
+            : "";
+        var response = new ActionResponse { Success = true, Message = $"Clicked ref={request.Ref}{posInfo}" };
         return IpcSerializer.CreateResponse(message.Id, response);
     }
 
@@ -406,12 +428,17 @@ public sealed class IpcServer
 
         var response = await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var root = Application.Current.MainWindow as DependencyObject;
-            if (root == null)
-                throw new InvalidOperationException("No main window found");
-
             var finder = new ElementFinder();
-            return finder.Find(root, request, _refRegistry);
+            var allResults = new FindElementResponse { Matches = [] };
+
+            // 모든 열린 윈도우에서 검색
+            foreach (Window window in Application.Current.Windows)
+            {
+                var result = finder.Find(window, request, _refRegistry);
+                allResults.Matches.AddRange(result.Matches);
+            }
+
+            return allResults;
         });
 
         return IpcSerializer.CreateResponse(message.Id, response);

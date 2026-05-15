@@ -10,4 +10,10 @@ public sealed class ClickRequest
 
     /// <summary>요소가 준비될 때까지 대기하는 최대 시간 (밀리초). 기본값 5000ms.</summary>
     public int Timeout { get; set; } = 5000;
+
+    /// <summary>요소 내 상대 X 좌표 (0.0~1.0 비율). null이면 중앙 클릭.</summary>
+    public double? X { get; set; }
+
+    /// <summary>요소 내 상대 Y 좌표 (0.0~1.0 비율). null이면 중앙 클릭.</summary>
+    public double? Y { get; set; }
 }

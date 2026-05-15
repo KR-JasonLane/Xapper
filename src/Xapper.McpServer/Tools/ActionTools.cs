@@ -18,14 +18,16 @@ public sealed class ActionTools
         _sessionManager = sessionManager;
     }
 
-    [McpServerTool(Name = "xapper_click"), Description("Click a UI element by ref (uses AutomationPeer or RaiseEvent fallback)")]
+    [McpServerTool(Name = "xapper_click"), Description("Click a UI element by ref. Optionally specify relative coordinates (0.0~1.0) for position-based click within the element.")]
     public async Task<string> Click(
         [Description("Element ref from last snapshot")] int @ref,
+        [Description("Relative X position within element (0.0=left, 1.0=right). Omit for default click.")] double? x = null,
+        [Description("Relative Y position within element (0.0=top, 1.0=bottom). Omit for default click.")] double? y = null,
         [Description("Timeout in ms to wait for element readiness (default 5000)")] int timeout = 5000,
         CancellationToken ct = default)
     {
         var client = _sessionManager.GetActive();
-        var response = await client.ClickAsync(@ref, timeout, ct);
+        var response = await client.ClickAsync(@ref, timeout, x, y, ct);
 
         if (response.Type == "error")
             return $"Error: {response.Payload}";
